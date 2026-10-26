@@ -1,0 +1,148 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+class User <<Model>> {
+  -id: int
+  -name: String
+  -email: String
+  -passwordHash: String
+  -role: String
+  +authenticate(password: String): bool
+  +hasRole(role: String): bool
+  +updateProfile(name: String): void
+  +changePassword(password: String): void
+  +deactivate(): void
+}
+class Product <<Model>> {
+  -id: int
+  -sku: String
+  -name: String
+  -unit: String
+  -minimumStock: int
+  +validateSku(sku: String): bool
+  +rename(name: String): void
+  +setUnit(unit: String): void
+  +setMinimumStock(quantity: int): void
+  +isBelowMinimum(quantity: int): bool
+}
+class Category <<Model>> {
+  -id: int
+  -name: String
+  -description: String
+  -code: String
+  -isActive: bool
+  +rename(name: String): void
+  +updateDescription(text: String): void
+  +setCode(code: String): void
+  +activate(): void
+  +deactivate(): void
+}
+class Supplier <<Model>> {
+  -id: int
+  -name: String
+  -contactPerson: String
+  -phone: String
+  -email: String
+  +rename(name: String): void
+  +setContactPerson(name: String): void
+  +setPhone(phone: String): void
+  +setEmail(email: String): void
+  +validateContact(): bool
+}
+class Warehouse <<Model>> {
+  -id: int
+  -name: String
+  -address: String
+  -code: String
+  -isActive: bool
+  +rename(name: String): void
+  +changeAddress(address: String): void
+  +setCode(code: String): void
+  +activate(): void
+  +deactivate(): void
+}
+class Stock <<Model>> {
+  -id: int
+  -productId: int
+  -warehouseId: int
+  -quantity: int
+  -updatedAt: DateTime
+  +increase(amount: int): void
+  +decrease(amount: int): bool
+  +hasEnough(amount: int): bool
+  +getQuantity(): int
+  +isLow(minimum: int): bool
+}
+class StockMovement <<Model>> {
+  -id: int
+  -warehouseId: int
+  -userId: int
+  -type: String
+  -status: String
+  +addItem(productId: int, quantity: int): void
+  +removeItem(itemId: int): void
+  +validate(): bool
+  +post(): bool
+  +cancel(): void
+}
+class MovementItem <<Model>> {
+  -id: int
+  -movementId: int
+  -productId: int
+  -quantity: int
+  -unitPrice: Decimal
+  +setQuantity(amount: int): void
+  +setUnitPrice(price: Decimal): void
+  +subtotal(): Decimal
+  +validateQuantity(): bool
+  +describe(): String
+}
+abstract class BaseController <<Controller>> {
+  #currentUserId: int
+  #requestId: String
+  #locale: String
+  #viewPath: String
+  #errorMessage: String
+  +authorize(action: String): bool
+  +validate(data: Map): bool
+  +respond(data: Map): Response
+  +fail(message: String): Response
+  +log(action: String): void
+}
+class ProductController <<Controller>> {
+  -productService: String
+  -pageSize: int
+  -sortField: String
+  -filterText: String
+  -activeOnly: bool
+  +index(filter: String): Response
+  +show(id: int): Response
+  +store(data: Map): Response
+  +update(id: int, data: Map): Response
+  +destroy(id: int): Response
+}
+class MovementController <<Controller>> {
+  -movementService: String
+  -defaultType: String
+  -pageSize: int
+  -sortField: String
+  -statusFilter: String
+  +index(status: String): Response
+  +show(id: int): Response
+  +store(data: Map): Response
+  +postMovement(id: int): Response
+  +cancelMovement(id: int): Response
+}
+Category "1" o-- "0..*" Product : категоризує
+Supplier "0..1" -- "0..*" Product : постачає
+Warehouse "1" o-- "0..*" Stock : обліковує
+Product "1" -- "0..*" Stock : має залишок
+StockMovement "1" *-- "1..*" MovementItem : містить
+Product "1" -- "0..*" MovementItem : фігурує
+Warehouse "1" -- "0..*" StockMovement : місце операції
+User "1" -- "0..*" StockMovement : реєструє
+BaseController <|-- ProductController
+BaseController <|-- MovementController
+ProductController ..> Product : керує
+MovementController ..> StockMovement : керує
+@enduml

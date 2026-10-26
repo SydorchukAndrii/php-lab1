@@ -1,0 +1,38 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor "Працівник складу" as Worker
+actor "Менеджер складу" as Manager
+actor "Адміністратор" as Admin
+Manager --|> Worker
+Admin --|> Worker
+rectangle "Система обліку товарів на складі" {
+  usecase "Переглянути залишки" as UC1
+  usecase "Знайти товар" as UC2
+  usecase "Зареєструвати надходження" as UC3
+  usecase "Перевірити кількість" as UC4
+  usecase "Зареєструвати відвантаження" as UC5
+  usecase "Сформувати звіт" as UC6
+  usecase "Провести інвентаризацію" as UC7
+  usecase "Контролювати мінімальні залишки" as UC8
+  usecase "Експортувати звіт" as UC9
+  usecase "Керувати користувачами" as UC10
+  usecase "Налаштувати довідники" as UC11
+  usecase "Переглянути журнал подій" as UC12
+  usecase "Попередити про дефіцит" as UC13
+}
+Worker -- UC1
+Worker -- UC2
+Worker -- UC3
+Worker -- UC5
+Manager -- UC6
+Manager -- UC7
+Manager -- UC8
+Admin -- UC10
+Admin -- UC11
+Admin -- UC12
+UC3 ..> UC2 : <<include>>
+UC5 ..> UC4 : <<include>>
+UC9 ..> UC6 : <<extend>>
+UC13 ..> UC8 : <<extend>>
+@enduml
