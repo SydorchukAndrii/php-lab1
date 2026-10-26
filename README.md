@@ -55,3 +55,12 @@ The pipeline performs:
 3. Code style validation
 4. Unit testing
 5. GitHub Secrets demonstration
+
+## Calculator Usage
+
+The Calculator class provides two arithmetic methods:
+
+- `add($x, $y)` - returns the sum of two numbers.
+- `subtract($x, $y)` - returns the difference between two numbers.
+
+These methods are covered by automated PHPUnit tests.
