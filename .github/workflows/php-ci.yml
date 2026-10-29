@@ -2,35 +2,30 @@ name: PHP CI Application
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-
-      - name: Install Dependencies
-        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
+          extensions: mbstring, dom, fileinfo, pdo_sqlite, sqlite3
+      - name: Copy environment
+        run: cp .env.example .env
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Generate application key
+        run: php artisan key:generate
       - name: Lint code with Pint
         run: ./vendor/bin/pint --test
-
-      - name: Run unit tests
-        run: ./vendor/bin/phpunit --bootstrap vendor/autoload.php tests/Unit
-
-      - name: Demonstrate GitHub Secrets
+      - name: Run Laravel tests
         env:
-          MY_SECRET: ${{ secrets.MY_SUPER_SECRET_KEY }}
-        run: |
-          echo "Testing GitHub Secrets masking"
-          echo "::add-mask::$MY_SECRET"
-          echo "Secret value: $MY_SECRET"
+          APP_ENV: testing
+          SCANNER_TOKEN: ci-test-scanner-token
+        run: php artisan test
