@@ -1,70 +1,40 @@
 <?php
 
 declare(strict_types=1);
-use Faker\Factory;
 
 require_once __DIR__.'/vendor/autoload.php';
-require_once __DIR__.'/app/Services/EntityService.php';
-require_once __DIR__.'/app/Services/DataProcessor.php';
 
-$quantity = 3;
-$minimumStock = 5;
-$isLow = isBelowMinimum($quantity, $minimumStock);
+use App\Core\Database;
+use App\Core\EntityFactory;
+use App\Models\Product;
+use App\Services\ConsoleLogger;
+use App\Services\EntityService;
+use App\Tasks\Book;
+use App\Tasks\Category;
+use App\Tasks\HeadOfDepartment;
+use App\Tasks\Triangle;
 
-$faker = Factory::create();
-$stocks = [];
-for ($i = 0; $i < 10; $i++) {
-    $stocks[] = $faker->numberBetween(0, 30);
+echo '=== Лабораторна робота №4 ==='.PHP_EOL;
+$db1 = Database::getInstance();
+$db2 = Database::getInstance();
+echo 'Singleton: '.(($db1 === $db2) ? 'той самий екземпляр' : 'помилка').PHP_EOL;
+
+$factory = new EntityFactory;
+$product = $factory->createEntity('product', ['id' => '1', 'createdAt' => '2026-10-29', 'sku' => 'SKU-001', 'name' => 'Ноутбук', 'unit' => 'шт', 'minimumStock' => 5]);
+$user = $factory->createEntity('user', ['id' => '2', 'createdAt' => '2026-10-29', 'name' => 'Адміністратор', 'email' => 'admin@example.test', 'role' => 'admin']);
+$service = new EntityService(new ConsoleLogger);
+echo $service->processEntity($product).PHP_EOL;
+echo $service->processEntity($user).PHP_EOL;
+if ($product instanceof Product) {
+    echo 'JSON товару:'.PHP_EOL.$product->exportToJson().PHP_EOL;
 }
 
-$minThreshold = 10;
-$filteredStocks = array_filter($stocks, function (int $stock) use ($minThreshold): bool {
-    return $stock < $minThreshold;
-});
-
-try {
-    $discountResult = applyDiscount(1000.0, 150.0);
-    $discountMessage = 'Ціна зі знижкою: '.$discountResult;
-} catch (Exception $e) {
-    $discountMessage = 'Помилка: '.$e->getMessage();
-} finally {
-    $discountMessage .= ' | Завершення спроби розрахунку.';
-}
-
-$number = 1234076;
-$text = 'Система обліку товарів на складі';
-$needle = 'товарів';
-$found = findSubstring($text, $needle);
-$evenWordsText = 'склад товари база даних';
-?>
-<!doctype html>
-<html lang="uk">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Лабораторна робота №3 — PHP</title>
-</head>
-
-<body>
-    <h1>Лабораторна робота №3 — складський облік</h1>
-    <?php require __DIR__.'/app/Models/EntityArray.php'; ?>
-
-    <h2>3. Користувацька функція</h2>
-    <p>Залишок: <?= $quantity ?>, мінімум: <?= $minimumStock ?>.
-        Нижче мінімуму: <?= $isLow ? 'Так' : 'Ні' ?></p>
-
-    <h2>4. Faker та анонімна функція</h2>
-    <p>Згенеровані залишки: <?= implode(', ', $stocks) ?></p>
-    <p>Залишки менші за <?= $minThreshold ?>: <?= implode(', ', $filteredStocks) ?></p>
-
-    <h2>5. Обробка винятків</h2>
-    <p><?= htmlspecialchars($discountMessage, ENT_QUOTES, 'UTF-8') ?></p>
-
-    <h2>6. Індивідуальний варіант №4</h2>
-    <p>Мінімальна цифра числа <?= $number ?>: <?= findMinimumDigit($number) ?></p>
-    <p>Знайдений підрядок: <?= htmlspecialchars($found ?? 'Не знайдено', ENT_QUOTES, 'UTF-8') ?></p>
-    <p>Рядок: <?= htmlspecialchars($evenWordsText, ENT_QUOTES, 'UTF-8') ?>.
-        Слів із парною кількістю символів: <?= countEvenLengthWords($evenWordsText) ?></p>
-</body>
-
-</html>
+$books = new Category(1, 'Програмування');
+$books->addBook(new Book(1, 'PHP 8', ['Автор 1'], 2024));
+$books->addBook(new Book(2, 'Python', ['Автор 2'], 2025));
+echo 'Пошук книг PHP: '.count($books->searchBooks('PHP')).PHP_EOL;
+$books->removeBook(1);
+echo 'Після видалення: '.count($books->searchBooks('PHP')).PHP_EOL;
+echo (new HeadOfDepartment('Іван Петренко'))->getRoleDetails().PHP_EOL;
+$triangle = new Triangle(3, 4, 5);
+echo 'Трикутник: периметр='.$triangle->perimeter().', площа='.$triangle->area().PHP_EOL;

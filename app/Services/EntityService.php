@@ -2,16 +2,23 @@
 
 declare(strict_types=1);
 
-function isBelowMinimum(int $quantity, int $minimumStock): bool
-{
-    return $quantity < $minimumStock;
-}
+namespace App\Services;
 
-function applyDiscount(float $price, float $discount): float
+use App\Interfaces\LoggerInterface;
+use App\Models\AbstractEntity;
+
+class EntityService
 {
-    if ($discount < 0 || $discount > 100) {
-        throw new Exception('Неприпустиме значення знижки!');
+    public function __construct(
+        private LoggerInterface $logger
+    ) {}
+
+    public function processEntity(AbstractEntity $entity): string
+    {
+        $details = $entity->getDetails();
+
+        $this->logger->log('Оброблено сутність: '.$details);
+
+        return $details;
     }
-
-    return $price - ($price * ($discount / 100));
 }
