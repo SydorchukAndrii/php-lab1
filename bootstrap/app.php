@@ -13,13 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'scanner.access' => VerifyScannerToken::class,
-        ]);
-
+        $middleware->alias(['scanner.access' => VerifyScannerToken::class]);
+        // Для навчального JSON API без сесійних cookie.
+        // У продуктивній системі: routes/api.php + належна автентифікація.
         $middleware->validateCsrfTokens(except: [
-            'products',
-            'products/*',
+            'products', 'products/*', 'categories', 'suppliers', 'warehouses',
+            'users', 'users/*/profile', 'movements', 'movements/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

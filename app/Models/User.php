@@ -4,15 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-class User extends AbstractEntity
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
 {
-    public function __construct(string $id, string $createdAt, protected string $name, protected string $email, protected string $role = 'worker')
+    use HasFactory, Notifiable;
+
+    protected $fillable = ['name', 'email', 'password', 'role', 'is_active'];
+
+    protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = ['email_verified_at' => 'datetime', 'password' => 'hashed', 'is_active' => 'boolean'];
+
+    public function profile(): HasOne
     {
-        parent::__construct($id, $createdAt);
+        return $this->hasOne(UserProfile::class);
     }
 
-    public function getDetails(): string
+    public function movements(): HasMany
     {
-        return "Користувач {$this->name} ({$this->email}), роль: {$this->role}";
+        return $this->hasMany(StockMovement::class);
     }
 }
