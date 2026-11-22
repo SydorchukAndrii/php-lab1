@@ -4,20 +4,37 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Interfaces\ExportableInterface;
-use App\Traits\JsonExportTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Product extends AbstractEntity implements ExportableInterface
+class Product extends Model
 {
-    use JsonExportTrait;
+    use HasFactory;
 
-    public function __construct(string $id, string $createdAt, protected string $sku, protected string $name, protected string $unit = 'шт', protected int $minimumStock = 0)
+    protected $fillable = ['category_id', 'sku', 'name', 'unit', 'minimum_stock', 'is_active'];
+
+    protected $casts = ['minimum_stock' => 'integer', 'is_active' => 'boolean'];
+
+    public function category(): BelongsTo
     {
-        parent::__construct($id, $createdAt);
+        return $this->belongsTo(Category::class);
     }
 
-    public function getDetails(): string
+    public function suppliers(): BelongsToMany
     {
-        return "Товар {$this->name} (SKU: {$this->sku}), одиниця: {$this->unit}, мінімальний залишок: {$this->minimumStock}";
+        return $this->belongsToMany(Supplier::class)->withTimestamps();
+    }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class);
+    }
+
+    public function movementItems(): HasMany
+    {
+        return $this->hasMany(MovementItem::class);
     }
 }

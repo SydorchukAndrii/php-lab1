@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProductAccessTest extends TestCase
 {
+    use RefreshDatabase;
+
     private function payload(): array
     {
-        return ['sku' => 'SKU-003', 'name' => 'Монітор', 'unit' => 'шт', 'minimumStock' => 4];
+        return [
+            'category_id' => Category::factory()->create()->id,
+            'sku' => 'SKU-003', 'name' => 'Монітор', 'unit' => 'шт', 'minimumStock' => 4,
+        ];
     }
 
     public function test_index_returns_200(): void
@@ -43,6 +50,6 @@ class ProductAccessTest extends TestCase
         config()->set('services.scanner.token', 'test-scanner-token');
         $this->withHeader('X-Scanner-Token', 'test-scanner-token')
             ->postJson('/products', [])
-            ->assertUnprocessable()->assertJsonValidationErrors(['sku', 'name', 'unit', 'minimumStock']);
+            ->assertUnprocessable()->assertJsonValidationErrors(['sku', 'name', 'unit', 'minimumStock', 'category_id']);
     }
 }
