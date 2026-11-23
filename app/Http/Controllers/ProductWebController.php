@@ -31,6 +31,8 @@ class ProductWebController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Product::class);
+
         return view('ui.products.form', [
             'product' => new Product(['unit' => 'шт', 'minimum_stock' => 0, 'is_active' => true]),
             'categories' => Category::orderBy('name')->get(),
@@ -40,7 +42,9 @@ class ProductWebController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Product::class);
         $data = $this->validateInput($request);
+        $data['user_id'] = $request->user()->id;
         $product = DB::transaction(function () use ($data) {
             $product = Product::create(Arr::except($data, ['supplier_ids']));
             $product->suppliers()->sync($data['supplier_ids'] ?? []);
@@ -58,6 +62,8 @@ class ProductWebController extends Controller
 
     public function edit(Product $product): View
     {
+        $this->authorize('update', $product);
+
         return view('ui.products.form', [
             'product' => $product->load('suppliers'),
             'categories' => Category::orderBy('name')->get(),
@@ -67,6 +73,7 @@ class ProductWebController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
+        $this->authorize('update', $product);
         $data = $this->validateInput($request, $product);
         DB::transaction(function () use ($product, $data): void {
             $product->update(Arr::except($data, ['supplier_ids']));
@@ -78,6 +85,7 @@ class ProductWebController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        $this->authorize('delete', $product);
         try {
             $product->delete();
         } catch (QueryException $e) {

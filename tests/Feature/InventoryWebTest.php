@@ -19,36 +19,25 @@ class InventoryWebTest extends TestCase
     {
         $category = Category::factory()->create();
         Product::factory()->for($category)->create(['name' => 'Тестовий ноутбук']);
-
         $this->get('/ui')->assertOk()->assertSee('Система обліку товарів на складі');
-        $this->get('/ui/products')->assertOk()->assertSee('Тестовий ноутбук')
-            ->assertSee($category->name);
+        $this->get('/ui/products')->assertOk()->assertSee('Тестовий ноутбук')->assertSee($category->name);
     }
 
     public function test_form_uses_csrf_and_shows_validation_errors(): void
     {
         Supplier::factory()->create();
-
+        $this->loginAsUser();
         $this->get('/ui/products/create')->assertOk()
-            ->assertSee('name="_token"', false)
-            ->assertSee('name="supplier_ids[]"', false);
-
-        $this->post('/ui/products', [
-            'sku' => '',
-            'name' => '',
-        ])->assertSessionHasErrors([
-            'sku',
-            'name',
-            'category_id',
-        ]);
+            ->assertSee('name="_token"', false)->assertSee('name="supplier_ids[]"', false);
+        $this->post('/ui/products', ['sku' => '', 'name' => ''])->assertSessionHasErrors(['sku', 'name', 'category_id']);
     }
 
     public function test_create_update_delete_product_and_pivot(): void
     {
+        $user = $this->loginAsUser();
         $category = Category::factory()->create();
         $supplierA = Supplier::factory()->create();
         $supplierB = Supplier::factory()->create();
-
         $this->post('/ui/products', [
             'sku' => 'WEB7-A',
             'name' => 'Товар для браузера',
@@ -59,11 +48,8 @@ class InventoryWebTest extends TestCase
             'supplier_ids' => [$supplierA->id],
         ])->assertRedirect();
         $product = Product::where('sku', 'WEB7-A')->firstOrFail();
-        $this->assertDatabaseHas('product_supplier', [
-            'product_id' => $product->id,
-            'supplier_id' => $supplierA->id,
-        ]);
-
+        $this->assertEquals($user->id, $product->user_id);
+        $this->assertDatabaseHas('product_supplier', ['product_id' => $product->id, 'supplier_id' => $supplierA->id]);
         $this->put('/ui/products/'.$product->id, [
             'sku' => 'WEB7-A',
             'name' => 'Оновлений товар',
@@ -74,29 +60,18 @@ class InventoryWebTest extends TestCase
             'supplier_ids' => [$supplierB->id],
         ])->assertRedirect();
         $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Оновлений товар']);
-        $this->assertDatabaseHas('product_supplier', [
-            'product_id' => $product->id,
-            'supplier_id' => $supplierB->id,
-        ]);
-        $this->assertDatabaseMissing('product_supplier', [
-            'product_id' => $product->id,
-            'supplier_id' => $supplierA->id,
-        ]);
-
+        $this->assertDatabaseHas('product_supplier', ['product_id' => $product->id, 'supplier_id' => $supplierB->id]);
+        $this->assertDatabaseMissing('product_supplier', ['product_id' => $product->id, 'supplier_id' => $supplierA->id]);
         $this->delete('/ui/products/'.$product->id)->assertRedirect('/ui/products');
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
     public function test_directory_forms_and_user_profile(): void
     {
+        $this->loginAsUser(['role' => 'admin']);
         $this->get('/ui/categories/create')->assertOk()->assertSee('Зберегти');
-        $this->post('/ui/categories', [
-            'name' => 'Побутова техніка',
-            'code' => 'HOUSE',
-            'is_active' => 1,
-        ])->assertRedirect('/ui/categories');
+        $this->post('/ui/categories', ['name' => 'Побутова техніка', 'code' => 'HOUSE', 'is_active' => 1])->assertRedirect('/ui/categories');
         $this->assertDatabaseHas('categories', ['code' => 'HOUSE']);
-
         $this->post('/ui/users', [
             'name' => 'Тестовий менеджер',
             'email' => 'ui7@example.com',
@@ -112,11 +87,10 @@ class InventoryWebTest extends TestCase
 
     public function test_movement_form_creates_and_posts_receipt(): void
     {
-        $user = User::factory()->create();
+        $user = $this->loginAsUser(['role' => 'manager']);
         $warehouse = Warehouse::factory()->create();
         $product = Product::factory()->create();
         $this->get('/ui/movements/create')->assertOk()->assertSee('Зберегти чернетку');
-
         $this->post('/ui/movements', [
             'user_id' => $user->id,
             'warehouse_id' => $warehouse->id,
@@ -137,5 +111,18 @@ class InventoryWebTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'quantity' => 5,
         ]);
+    }
+
+    private function loginAsUser(array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+
+        if (! $user instanceof User) {
+            throw new \LogicException('Expected User model.');
+        }
+
+        $this->actingAs($user);
+
+        return $user;
     }
 }

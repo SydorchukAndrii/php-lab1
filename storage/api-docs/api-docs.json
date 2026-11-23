@@ -1,0 +1,572 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Складський облік — REST API",
+        "description": "Лабораторна робота №8: авторизація Sanctum та OpenAPI",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api/v1",
+            "description": "Локальний сервер"
+        }
+    ],
+    "paths": {
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Реєстрація та отримання токена",
+                "operationId": "5d4fa5d5607ed675ba93907e1fc94534",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Марія"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "maria@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "pass123456"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "pass123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Створено токен"
+                    },
+                    "422": {
+                        "description": "Помилка валідації"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Увійти та отримати Bearer-токен",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "maria@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "pass123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Токен видано"
+                    },
+                    "422": {
+                        "description": "Неправильні облікові дані"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Відкликати поточний токен",
+                "operationId": "28d48c13fca984400ac8de99f54ee13a",
+                "responses": {
+                    "200": {
+                        "description": "Токен відкликано"
+                    },
+                    "401": {
+                        "description": "Токен відсутній"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/categories": {
+            "get": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Список: categories",
+                "operationId": "f99e0e2e6b3f0655d88593a5f2db2864",
+                "responses": {
+                    "200": {
+                        "description": "Список записів"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Створити запис: categories",
+                "operationId": "6dcb7fa0ca5dfa5cd7af4a806e2ade7e",
+                "responses": {
+                    "201": {
+                        "description": "Створено"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/suppliers": {
+            "get": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Список: suppliers",
+                "operationId": "c36070498ec7f44980520badc90b32be",
+                "responses": {
+                    "200": {
+                        "description": "Список записів"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Створити запис: suppliers",
+                "operationId": "c6cf5cd7e4dcd93edc2aa3d07727c8f0",
+                "responses": {
+                    "201": {
+                        "description": "Створено"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/warehouses": {
+            "get": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Список: warehouses",
+                "operationId": "951372da93c3b933be71a2972b8cad4b",
+                "responses": {
+                    "200": {
+                        "description": "Список записів"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Directories"
+                ],
+                "summary": "Створити запис: warehouses",
+                "operationId": "2e54c688c01c383bd436c77f5525fe37",
+                "responses": {
+                    "201": {
+                        "description": "Створено"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/stocks": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Залишки за складами",
+                "operationId": "6e2b0b36664f72839aaf9eae0c66d114",
+                "responses": {
+                    "200": {
+                        "description": "Список даних"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/movements": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Складські документи",
+                "operationId": "880799f1381908ec264808de194b73ec",
+                "responses": {
+                    "200": {
+                        "description": "Список даних"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/movement-items": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Позиції складських документів",
+                "operationId": "0319659728af2869f4d4d94b8159ef9a",
+                "responses": {
+                    "200": {
+                        "description": "Список даних"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Список користувачів",
+                "operationId": "fcfca5b5a2f66bb5539298915679570c",
+                "responses": {
+                    "200": {
+                        "description": "Список даних"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Бракує прав"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Каталог товарів",
+                "operationId": "645256586450da9881e2fe9ed1024521",
+                "responses": {
+                    "200": {
+                        "description": "Список товарів"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Створити товар",
+                "operationId": "5c64e84cc4ad3cc8d4f458a2164932fa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "sku",
+                                    "name",
+                                    "unit",
+                                    "minimum_stock"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "example": "LAB8-101"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Монітор"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "example": "шт"
+                                    },
+                                    "minimum_stock": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "supplier_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Створено"
+                    },
+                    "401": {
+                        "description": "Неавтентифікований запит"
+                    },
+                    "422": {
+                        "description": "Помилка валідації"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/products/{product}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Перегляд товару",
+                "operationId": "241bc295b524ec593e8e064a315a16bc",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Товар"
+                    },
+                    "404": {
+                        "description": "Не знайдено"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Редагувати власний товар",
+                "operationId": "3206fd273f43786031a074b47898b1f2",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Оновлений монітор"
+                                    },
+                                    "supplier_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Оновлено"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Чужий товар"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Видалити власний товар",
+                "operationId": "ecc3c077082d71f707fd610da8e7a9a2",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Видалено"
+                    },
+                    "401": {
+                        "description": "Без токена"
+                    },
+                    "403": {
+                        "description": "Чужий товар"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "Sanctum token",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Directories",
+            "description": "Directories"
+        },
+        {
+            "name": "Inventory",
+            "description": "Inventory"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
+        }
+    ]
+}
