@@ -40,3 +40,5 @@ Route::post('/movements', [MovementController::class, 'store'])->middleware('sca
 Route::post('/movements/{id}/post', [MovementController::class, 'post'])->whereNumber('id')->middleware('scanner.access')->name('movements.post');
 Route::post('/movements/{id}/cancel', [MovementController::class, 'cancel'])->whereNumber('id')->middleware('scanner.access')->name('movements.cancel');
 Route::get('/movement-items', [MovementItemController::class, 'index'])->name('movement-items.index');
+
+require __DIR__.'/lab7_web.php';
