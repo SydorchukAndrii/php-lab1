@@ -14,9 +14,14 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['category_id', 'sku', 'name', 'unit', 'minimum_stock', 'is_active'];
+    protected $fillable = ['user_id', 'category_id', 'sku', 'name', 'unit', 'minimum_stock', 'is_active'];
 
     protected $casts = ['minimum_stock' => 'integer', 'is_active' => 'boolean'];
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function category(): BelongsTo
     {

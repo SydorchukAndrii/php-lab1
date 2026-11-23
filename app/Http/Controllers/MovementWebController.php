@@ -19,9 +19,12 @@ class MovementWebController extends Controller
 {
     public function index(): View
     {
-        return view('ui.movements.index', [
-            'movements' => StockMovement::with(['user', 'warehouse'])->latest('id')->paginate(10),
-        ]);
+        $query = StockMovement::with(['user', 'warehouse']);
+        if (auth()->user()->role === 'worker') {
+            $query->where('user_id', auth()->id());
+        }
+
+        return view('ui.movements.index', ['movements' => $query->latest('id')->paginate(10)]);
     }
 
     public function create(): View
@@ -31,11 +34,14 @@ class MovementWebController extends Controller
 
     public function show(StockMovement $movement): View
     {
+        $this->authorizeMovement($movement);
+
         return view('ui.movements.show', ['movement' => $movement->load(['user', 'warehouse', 'items.product'])]);
     }
 
     public function edit(StockMovement $movement): View
     {
+        $this->authorizeMovement($movement);
         abort_unless($movement->status === 'draft', 403, 'Редагувати можна лише чернетку.');
 
         return $this->form($movement->load('items'));
@@ -44,6 +50,7 @@ class MovementWebController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateInput($request);
+        abort_if($request->user()->role === 'worker' && (int) $data['user_id'] !== $request->user()->id, 403);
         $movement = DB::transaction(function () use ($data): StockMovement {
             $movement = StockMovement::create([
                 'user_id' => $data['user_id'], 'warehouse_id' => $data['warehouse_id'],
@@ -61,8 +68,10 @@ class MovementWebController extends Controller
 
     public function update(Request $request, StockMovement $movement): RedirectResponse
     {
+        $this->authorizeMovement($movement);
         abort_unless($movement->status === 'draft', 403);
         $data = $this->validateInput($request);
+        abort_if(auth()->user()->role === 'worker' && (int) $data['user_id'] !== auth()->id(), 403);
         DB::transaction(function () use ($movement, $data): void {
             $movement->update([
                 'user_id' => $data['user_id'], 'warehouse_id' => $data['warehouse_id'], 'type' => $data['type'],
@@ -78,6 +87,7 @@ class MovementWebController extends Controller
 
     public function destroy(StockMovement $movement): RedirectResponse
     {
+        $this->authorizeMovement($movement);
         abort_unless($movement->status === 'draft', 403);
         $movement->delete();
 
@@ -86,6 +96,7 @@ class MovementWebController extends Controller
 
     public function post(StockMovement $movement, StockMovementService $service): RedirectResponse
     {
+        $this->authorizeMovement($movement);
         $service->post($movement);
 
         return redirect()->route('ui.movements.show', $movement)->with('success', 'Документ проведено. Залишки оновлено.');
@@ -93,16 +104,22 @@ class MovementWebController extends Controller
 
     public function cancel(StockMovement $movement, StockMovementService $service): RedirectResponse
     {
+        $this->authorizeMovement($movement);
         $service->cancel($movement);
 
         return redirect()->route('ui.movements.show', $movement)->with('success', 'Документ скасовано.');
+    }
+
+    private function authorizeMovement(StockMovement $movement): void
+    {
+        abort_if(auth()->user()->role === 'worker' && $movement->user_id !== auth()->id(), 403);
     }
 
     private function form(StockMovement $movement): View
     {
         return view('ui.movements.form', [
             'movement' => $movement,
-            'users' => User::orderBy('name')->get(),
+            'users' => auth()->user()->role === 'worker' ? User::whereKey(auth()->id())->get() : User::orderBy('name')->get(),
             'warehouses' => Warehouse::orderBy('name')->get(),
             'products' => Product::orderBy('name')->get(),
         ]);

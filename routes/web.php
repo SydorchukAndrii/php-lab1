@@ -41,4 +41,5 @@ Route::post('/movements/{id}/post', [MovementController::class, 'post'])->whereN
 Route::post('/movements/{id}/cancel', [MovementController::class, 'cancel'])->whereNumber('id')->middleware('scanner.access')->name('movements.cancel');
 Route::get('/movement-items', [MovementItemController::class, 'index'])->name('movement-items.index');
 
+require __DIR__.'/lab8_auth.php';
 require __DIR__.'/lab7_web.php';

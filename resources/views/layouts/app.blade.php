@@ -20,8 +20,20 @@
                 <a class="nav-link" href="{{ route('ui.stocks.index') }}">Залишки</a>
                 <a class="nav-link" href="{{ route('ui.movements.index') }}">Рух товарів</a>
                 <a class="nav-link" href="{{ route('ui.movement-items.index') }}">Позиції документів</a>
-                <a class="nav-link" href="{{ route('ui.users.index') }}">Користувачі</a>
+                @can('manage-users')<a class="nav-link" href="{{ route('ui.users.index') }}">Користувачі</a>@endcan
             </div>
+        </div>
+        <div class="navbar-nav ms-auto align-items-lg-center">
+            @guest
+                <a class="nav-link" href="{{ route('login') }}">Увійти</a>
+                <a class="nav-link" href="{{ route('register') }}">Реєстрація</a>
+            @endguest
+            @auth
+                <span class="navbar-text text-info me-2">{{ auth()->user()->name }} ({{ auth()->user()->role }})</span>
+                <form method="POST" action="{{ route('logout') }}">@csrf
+                    <button class="btn btn-sm btn-outline-light">Вийти</button>
+                </form>
+            @endauth
         </div>
     </div>
 </nav>

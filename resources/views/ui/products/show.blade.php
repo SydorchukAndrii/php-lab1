@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', $product->name)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h2">{{ $product->name }}</h1><a class="btn btn-primary" href="{{ route('ui.products.edit', $product) }}">Редагувати</a></div>
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h2">{{ $product->name }}</h1>@can('update', $product)<a class="btn btn-primary" href="{{ route('ui.products.edit', $product) }}">Редагувати</a>@endcan</div>
 <div class="card shadow-sm"><div class="card-body">
     <dl class="row mb-0"><dt class="col-sm-3">Артикул</dt><dd class="col-sm-9">{{ $product->sku }}</dd>
     <dt class="col-sm-3">Категорія</dt><dd class="col-sm-9">{{ $product->category?->name ?? '—' }}</dd>
