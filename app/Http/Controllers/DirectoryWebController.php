@@ -4,23 +4,25 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Directory\StoreDirectoryRequest;
+use App\Http\Requests\Directory\UpdateDirectoryRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\DirectoryRecordService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 /** Довідники, користувачі та залишки: однаковий Blade CRUD без дублювання форм. */
 class DirectoryWebController extends Controller
 {
+    public function __construct(private readonly DirectoryRecordService $records) {}
+
     private function kind(Request $request): string
     {
         $name = (string) $request->route()?->getName();
@@ -115,20 +117,10 @@ class DirectoryWebController extends Controller
         return view('ui.directory.form', compact('kind', 'spec', 'model') + ['choices' => $this->choices()]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreDirectoryRequest $request): RedirectResponse
     {
         $kind = $this->kind($request);
-        $spec = $this->spec($kind);
-        $data = $this->validated($request, $kind);
-        DB::transaction(function () use ($kind, $spec, $data): void {
-            $model = $spec['model']::create(collect($data)->except(['profile_phone', 'profile_position'])->all());
-            if ($kind === 'users') {
-                $model->profile()->create([
-                    'phone' => $data['profile_phone'] ?? null,
-                    'position' => $data['profile_position'] ?? null,
-                ]);
-            }
-        });
+        $this->records->createRecord($kind, $request->validated());
 
         return redirect()->route('ui.'.$kind.'.index')->with('success', 'Запис створено.');
     }
@@ -150,21 +142,12 @@ class DirectoryWebController extends Controller
         return view('ui.directory.form', compact('kind', 'spec', 'model') + ['choices' => $this->choices()]);
     }
 
-    public function update(Request $request, int $record): RedirectResponse
+    public function update(UpdateDirectoryRequest $request, int $record): RedirectResponse
     {
         $kind = $this->kind($request);
-        $spec = $this->spec($kind);
-        $model = $spec['model']::findOrFail($record);
-        $data = $this->validated($request, $kind, $model);
-        DB::transaction(function () use ($kind, $model, $data): void {
-            $model->update(collect($data)->except(['profile_phone', 'profile_position'])->all());
-            if ($kind === 'users') {
-                $model->profile()->updateOrCreate(['user_id' => $model->id], [
-                    'phone' => $data['profile_phone'] ?? null,
-                    'position' => $data['profile_position'] ?? null,
-                ]);
-            }
-        });
+        $modelClass = $this->records->model($kind);
+        $model = $modelClass::findOrFail($record);
+        $this->records->updateRecord($kind, $model, $request->validated());
 
         return redirect()->route('ui.'.$kind.'.index')->with('success', 'Запис оновлено.');
     }
@@ -172,62 +155,13 @@ class DirectoryWebController extends Controller
     public function destroy(Request $request, int $record): RedirectResponse
     {
         $kind = $this->kind($request);
-        $spec = $this->spec($kind);
+        $modelClass = $this->records->model($kind);
         try {
-            $spec['model']::findOrFail($record)->delete();
+            $this->records->deleteRecord($modelClass::findOrFail($record));
         } catch (QueryException $e) {
             return back()->with('error', 'Видалення неможливе: запис використовується іншими сутностями.');
         }
 
         return redirect()->route('ui.'.$kind.'.index')->with('success', 'Запис видалено.');
-    }
-
-    private function validated(Request $request, string $kind, ?Model $model = null): array
-    {
-        $id = $model?->getKey();
-        $bool = ['sometimes', 'boolean'];
-        if (in_array($kind, ['categories', 'warehouses', 'users'], true)) {
-            $request->merge(['is_active' => $request->boolean('is_active') ? 1 : 0]);
-        }
-        $rules = match ($kind) {
-            'categories' => [
-                'name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($id)],
-                'code' => ['required', 'string', 'max:255', Rule::unique('categories', 'code')->ignore($id)],
-                'description' => ['nullable', 'string'], 'is_active' => $bool,
-            ],
-            'suppliers' => [
-                'name' => ['required', 'string', 'max:255'],
-                'contact_person' => ['nullable', 'string', 'max:255'],
-                'phone' => ['nullable', 'string', 'max:255'],
-                'email' => ['nullable', 'email', 'max:255', Rule::unique('suppliers', 'email')->ignore($id)],
-            ],
-            'warehouses' => [
-                'name' => ['required', 'string', 'max:255'],
-                'code' => ['required', 'string', 'max:255', Rule::unique('warehouses', 'code')->ignore($id)],
-                'address' => ['required', 'string', 'max:255'], 'is_active' => $bool,
-            ],
-            'stocks' => [
-                'product_id' => ['required', 'integer', 'exists:products,id',
-                    Rule::unique('stocks', 'product_id')->where('warehouse_id', $request->input('warehouse_id'))->ignore($id)],
-                'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
-                'quantity' => ['required', 'integer', 'min:0'],
-            ],
-            'users' => [
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($id)],
-                'role' => ['required', Rule::in(['worker', 'manager', 'admin'])],
-                'password' => [$id ? 'nullable' : 'required', 'string', 'min:8'],
-                'is_active' => $bool,
-                'profile_phone' => ['nullable', 'string', 'max:50'],
-                'profile_position' => ['nullable', 'string', 'max:255'],
-            ],
-            default => [],
-        };
-        $data = $request->validate($rules);
-        if ($kind === 'users' && empty($data['password'])) {
-            unset($data['password']);
-        }
-
-        return $data;
     }
 }

@@ -3,18 +3,24 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\MovementController;
 use App\Http\Controllers\MovementItemController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SentryDiagnosticController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SystemInfoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'OK', 'timestamp' => now()->toIso8601String()]))->name('health');
-Route::get('/system-info', fn () => response()->json(['application' => 'Warehouse Inventory', 'framework' => 'Laravel']))->name('system-info');
+Route::get('/health', HealthCheckController::class)->name('health');
+Route::get('/system-info', SystemInfoController::class)->name('system-info');
+// Laboratory diagnostic, unavailable in production and protected by admin authorization.
+Route::get('/lab9/sentry-test', SentryDiagnosticController::class)
+    ->middleware(['auth', 'can:manage-users'])->name('lab9.sentry-test');
 
 Route::prefix('products')->name('products.')->group(function (): void {
     Route::get('/', [ProductController::class, 'index'])->name('index');

@@ -33,6 +33,7 @@ jobs:
       - name: Run Laravel tests
         env:
           APP_ENV: testing
+          SENTRY_LARAVEL_DSN: ""
           SCANNER_TOKEN: ci-test-scanner-token
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
