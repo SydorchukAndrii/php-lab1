@@ -3,14 +3,13 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DirectoryApiController;
 use App\Http\Controllers\Api\InventoryApiController;
-use App\Http\Controllers\Api\ProductApiController;
+use App\Http\Controllers\Api\V1\ProductApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('register', [AuthController::class, 'register'])->name('register');
     Route::post('login', [AuthController::class, 'login'])->name('login');
-    Route::get('products', [ProductApiController::class, 'index'])->name('products.index');
-    Route::get('products/{product}', [ProductApiController::class, 'show'])->name('products.show');
+    Route::apiResource('products', ProductApiController::class)->only(['index', 'show']);
 
     foreach (['categories', 'suppliers', 'warehouses'] as $resource) {
         Route::get($resource, [DirectoryApiController::class, 'index'])->name($resource.'.index');
@@ -19,9 +18,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
-        Route::post('products', [ProductApiController::class, 'store'])->name('products.store');
-        Route::put('products/{product}', [ProductApiController::class, 'update'])->name('products.update');
-        Route::delete('products/{product}', [ProductApiController::class, 'destroy'])->name('products.destroy');
+        Route::apiResource('products', ProductApiController::class)->except(['index', 'show']);
         foreach (['categories', 'suppliers', 'warehouses'] as $resource) {
             Route::post($resource, [DirectoryApiController::class, 'store'])->name($resource.'.store');
             Route::put($resource.'/{record}', [DirectoryApiController::class, 'update'])->whereNumber('record')->name($resource.'.update');
